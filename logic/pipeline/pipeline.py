@@ -1,6 +1,6 @@
 import logging
 
-from logic import BotContext
+from logic.context import PersonaContext
 from logic.steps.step import Step
 
 
@@ -9,12 +9,8 @@ class Pipeline:
         self.steps = steps
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def run(self, ctx: BotContext) -> None:
+    def run(self, ctx: PersonaContext) -> None:
         self.logger.info("Iniciando pipeline")
-
         for step in self.steps:
-            if ctx.stop:
-                self.logger.info("Pipeline detenido por contexto")
-                break
             self.logger.info(f"Ejecutando step: {step.__class__.__name__}")
             step.run(ctx)

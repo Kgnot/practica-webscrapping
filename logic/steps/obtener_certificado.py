@@ -1,4 +1,4 @@
-from logic import BotContext
+from logic.context import GlobalContext, PersonaContext
 from logic.models.registro_alturas import RegistroAlturas
 from logic.ports.alturas_portal import AlturasPortal
 from logic.steps.step import Step
@@ -9,9 +9,9 @@ class ObtenerCertificado(Step):
     def __init__(self, alturas_portal: AlturasPortal):
         self.alturas_portal = alturas_portal
 
-    def run(self, ctx: BotContext):
+    def run(self, ctx: PersonaContext):
         # Obtenemos los certificados desde el portal
-        registrosAlturas: list[RegistroAlturas] | None  = self.alturas_portal.obtener_registros()
+        registrosAlturas: list[RegistroAlturas] | None = self.alturas_portal.obtener_registros()
 
         if not registrosAlturas:
             ctx.certificado = None

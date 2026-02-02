@@ -1,15 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
-
 from logic.models.registro_alturas import RegistroAlturas
 
-
 @dataclass
-class BotContext:
+class PersonaContext:
     cedula: str = ""
     nombre: str = ""
-    certificado: RegistroAlturas | None = None
+    certificado: Optional[RegistroAlturas] = None
     folder_persona: Optional[str] = None
-    download_path: str | None = None
-    stop: bool = False
-    errors: list[str] | None = list[str]
+    download_path: Optional[str] = None
