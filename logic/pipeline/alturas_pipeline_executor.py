@@ -1,3 +1,6 @@
+from concurrent.futures import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
+
 from infra import SeleniumAlturasPortal, CSVDocumentHandler, FileSystemDownloadHandler, FileSystemFolderHandler
 from logic import GlobalContext
 from logic.pipeline.base_pipeline_executor import BasePipelineExecutor
@@ -9,6 +12,32 @@ from selenium.webdriver.chrome.options import Options
 from logic.pipeline.pipeline import Pipeline
 from logic.steps import CargarPersonas, AbrirPortal, BuscarPorCedula, ObtenerCertificado, ObtenerFolder, \
     DescargarCertificado
+
+
+def process_persona(persona):
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=Options()
+    )
+
+    try:
+        portal = SeleniumAlturasPortal(driver)
+
+        pipeline = Pipeline([
+            AbrirPortal(portal),
+            BuscarPorCedula(portal),
+            ObtenerCertificado(portal),
+            ObtenerFolder(FileSystemFolderHandler("output/folder")),
+            DescargarCertificado(
+                portal,
+                FileSystemDownloadHandler("downloads/")
+            )
+        ])
+
+        pipeline.run(persona)
+
+    finally:
+        driver.quit()
 
 
 class AlturasPipelineExecutor(BasePipelineExecutor):
@@ -38,36 +67,15 @@ class AlturasPipelineExecutor(BasePipelineExecutor):
         return global_context
 
     def process_all_contexts(self, global_context):
-        # Definimos el pipeline
-        pipeline = Pipeline([
-            AbrirPortal(self.alturasPortal),
-            BuscarPorCedula(self.alturasPortal),
-            ObtenerCertificado(self.alturasPortal),
-            DescargarCertificado(self.alturasPortal, FileSystemDownloadHandler("downloads/")),
-            ObtenerFolder(FileSystemFolderHandler("output/folder"))
-        ])
-        # Ejecutamos el pipeline para cada persona
-        for persona in global_context.personas:
-            pipeline.run(persona)
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [
+                executor.submit(process_persona, persona)
+                for persona in global_context.personas
+            ]
 
-    def process_persona(self, persona):
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=Options()
-        )
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Error procesando persona: {e}")
 
-        try:
-            portal = SeleniumAlturasPortal(driver)
-
-            pipeline = Pipeline([
-                AbrirPortal(self.alturasPortal),
-                BuscarPorCedula(self.alturasPortal),
-                ObtenerCertificado(self.alturasPortal),
-                DescargarCertificado(portal, FileSystemDownloadHandler("downloads/")),
-                ObtenerFolder(FileSystemFolderHandler("output/folder"))
-            ])
-
-            pipeline.run(persona)
-
-        finally:
-            driver.quit()
