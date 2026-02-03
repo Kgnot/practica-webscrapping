@@ -1,11 +1,13 @@
-# Entornos virtuales
-.venv/
-venv/
-
-# IDEs
-.idea/
-.vscode/
-
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
